@@ -349,8 +349,8 @@ export default function Network() {
       {/* MAIN CONTENT */}
       <main className="flex flex-col gap-4">
         {/* Tabs */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-          <div className="flex border-b border-gray-200">
+        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="flex border-b border-gray-200 dark:border-gray-700">
             <TabButton
               active={activeTab === "invitations"}
               onClick={() => setActiveTab("invitations")}
@@ -371,8 +371,8 @@ export default function Network() {
             <div className="p-6">
               {invitations.length === 0 ? (
                 <div className="text-center py-12">
-                  <UserCheck className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500">No pending invitations</p>
+                  <UserCheck className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                  <p className="text-gray-500 dark:text-gray-400">No pending invitations</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -393,7 +393,7 @@ export default function Network() {
           {activeTab === "people" && (
             <div className="p-6">
               {/* Filters */}
-              <div className="flex flex-wrap gap-3 mb-6">
+              <div className="flex flex-wrap gap-3 mb-6 bg-white dark:bg-gray-900">
                 <FilterDropdown
                   label="Location"
                   value={locationFilter}
@@ -472,9 +472,9 @@ function NetworkSidebar({ counts, selectedFilter, onFilterChange }) {
   ];
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-      <div className="p-4 border-b border-gray-200">
-        <h2 className="text-base font-semibold text-gray-900">
+    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+        <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
           Manage my network
         </h2>
       </div>
@@ -487,8 +487,8 @@ function NetworkSidebar({ counts, selectedFilter, onFilterChange }) {
               onClick={() => onFilterChange(item.id)}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-colors ${
                 selectedFilter === item.id
-                  ? "bg-blue-50 text-blue-700"
-                  : "text-gray-700 hover:bg-gray-50"
+                  ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
+                  : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
               }`}
             >
               <div className="flex items-center gap-3">
@@ -496,8 +496,8 @@ function NetworkSidebar({ counts, selectedFilter, onFilterChange }) {
                 <span>{item.label}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-gray-400">{item.count}</span>
-                <ChevronRight className="w-4 h-4 text-gray-400" />
+                <span className="text-gray-400 dark:text-gray-500">{item.count}</span>
+                <ChevronRight className="w-4 h-4 text-gray-400 dark:text-gray-500" />
               </div>
             </button>
           );
@@ -512,7 +512,7 @@ function TabButton({ children, active, onClick, count }) {
     <button
       onClick={onClick}
       className={`flex-1 px-6 py-4 text-sm font-semibold transition-colors relative ${
-        active ? "text-blue-600" : "text-gray-600 hover:text-gray-900"
+        active ? "text-blue-600 dark:text-blue-400" : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
       }`}
     >
       <span className="flex items-center justify-center gap-2">
@@ -524,7 +524,7 @@ function TabButton({ children, active, onClick, count }) {
         )}
       </span>
       {active && (
-        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />
+        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400" />
       )}
     </button>
   );
@@ -532,7 +532,7 @@ function TabButton({ children, active, onClick, count }) {
 
 function InvitationCard({ invitation, onAccept, onIgnore }) {
   return (
-    <div className="flex items-start gap-4 p-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+    <div className="flex items-start gap-4 p-4 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors bg-white dark:bg-gray-900">
       <img
         src={invitation.avatar}
         alt={invitation.name}
@@ -541,24 +541,24 @@ function InvitationCard({ invitation, onAccept, onIgnore }) {
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h3 className="text-base font-semibold text-gray-900">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
               {invitation.name}
             </h3>
-            <p className="text-sm text-gray-600">{invitation.headline}</p>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-sm text-gray-600 dark:text-gray-400">{invitation.headline}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
               {invitation.mutualConnections} mutual connections
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={onIgnore}
-              className="px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-200 rounded-full transition-colors"
+              className="px-4 py-2 text-sm font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors"
             >
               Ignore
             </button>
             <button
               onClick={onAccept}
-              className="px-4 py-2 text-sm font-semibold text-blue-600 border border-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+              className="px-4 py-2 text-sm font-semibold text-blue-600 dark:text-blue-400 border border-blue-600 dark:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-full transition-colors"
             >
               Accept
             </button>
@@ -579,7 +579,7 @@ function PersonCard({
   onDismiss,
 }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow relative">
+    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden hover:shadow-md transition-shadow relative">
       {/* Dismiss button */}
       <button
         onClick={onDismiss}
@@ -589,7 +589,7 @@ function PersonCard({
       </button>
 
       {/* Cover photo */}
-      <div className="h-16 bg-gradient-to-r from-blue-100 to-blue-50 overflow-hidden">
+      <div className="h-16 bg-gradient-to-r from-blue-100 to-blue-50 dark:from-blue-900/30 dark:to-blue-800/20 overflow-hidden">
         {person.coverPhoto && (
           <img
             src={person.coverPhoto}
@@ -606,18 +606,18 @@ function PersonCard({
           <img
             src={person.avatar}
             alt={person.name}
-            className="w-16 h-16 rounded-full object-cover border-4 border-white shadow-sm"
+            className="w-16 h-16 rounded-full object-cover border-4 border-white dark:border-gray-900 shadow-sm"
           />
         </div>
 
         {/* Info */}
-        <h3 className="text-base font-semibold text-gray-900 hover:text-blue-600 cursor-pointer line-clamp-1">
+        <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer line-clamp-1">
           {person.name}
         </h3>
-        <p className="text-sm text-gray-600 line-clamp-2 mt-1">{person.headline}</p>
+        <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mt-1">{person.headline}</p>
 
         {/* Mutual connections */}
-        <div className="flex items-center gap-1 mt-2 text-xs text-gray-500">
+        <div className="flex items-center gap-1 mt-2 text-xs text-gray-500 dark:text-gray-500">
           <Users className="w-3 h-3" />
           <span>{person.mutualConnections} mutual connections</span>
         </div>
@@ -625,13 +625,13 @@ function PersonCard({
         {/* Meta info */}
         <div className="mt-3 space-y-1">
           {person.location && (
-            <div className="flex items-center gap-1 text-xs text-gray-500">
+            <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-500">
               <MapPin className="w-3 h-3" />
               <span>{person.location}</span>
             </div>
           )}
           {person.company && (
-            <div className="flex items-center gap-1 text-xs text-gray-500">
+            <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-500">
               <Building2 className="w-3 h-3" />
               <span>{person.company}</span>
             </div>
@@ -644,7 +644,7 @@ function PersonCard({
             <>
               <button
                 onClick={onConnect}
-                className="w-full py-2 px-4 text-sm font-semibold text-blue-600 border border-blue-600 hover:bg-blue-50 rounded-full transition-colors flex items-center justify-center gap-2"
+                className="w-full py-2 px-4 text-sm font-semibold text-blue-600 dark:text-blue-400 border border-blue-600 dark:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-full transition-colors flex items-center justify-center gap-2"
               >
                 <UserPlus className="w-4 h-4" />
                 Connect
@@ -653,8 +653,8 @@ function PersonCard({
                 onClick={onFollow}
                 className={`w-full py-2 px-4 text-sm font-semibold rounded-full transition-colors flex items-center justify-center gap-2 ${
                   isFollowing
-                    ? "text-gray-600 bg-gray-100"
-                    : "text-gray-600 border border-gray-300 hover:bg-gray-50"
+                    ? "text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800"
+                    : "text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800"
                 }`}
               >
                 {isFollowing ? (
@@ -676,14 +676,14 @@ function PersonCard({
             <>
               <button
                 disabled
-                className="w-full py-2 px-4 text-sm font-semibold text-gray-500 bg-gray-100 rounded-full cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full py-2 px-4 text-sm font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-full cursor-not-allowed flex items-center justify-center gap-2"
               >
                 <Check className="w-4 h-4" />
                 Pending
               </button>
               <button
                 onClick={onCancelRequest}
-                className="w-full py-2 px-4 text-sm font-semibold text-red-600 border border-red-600 hover:bg-red-50 rounded-full transition-colors"
+                className="w-full py-2 px-4 text-sm font-semibold text-red-600 dark:text-red-400 border border-red-600 dark:border-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-full transition-colors"
               >
                 Cancel request
               </button>
@@ -693,7 +693,7 @@ function PersonCard({
           {connectionState === "connected" && (
             <button
               disabled
-              className="w-full py-2 px-4 text-sm font-semibold text-gray-500 bg-gray-100 rounded-full cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full py-2 px-4 text-sm font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-full cursor-not-allowed flex items-center justify-center gap-2"
             >
               <Check className="w-4 h-4" />
               Connected
@@ -711,7 +711,7 @@ function FilterDropdown({ label, value, onChange, options }) {
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 text-sm text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none cursor-pointer"
+        className="appearance-none bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 pr-8 text-sm text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none cursor-pointer dark:focus:ring-blue-600 dark:focus:border-blue-600"
       >
         <option value="all">{label}: All</option>
         {options
