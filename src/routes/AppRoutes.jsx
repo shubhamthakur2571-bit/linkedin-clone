@@ -9,6 +9,7 @@ import Jobs from "../pages/Jobs";
 import Messaging from "../pages/Messaging";
 import Notifications from "../pages/Notifications";
 import Search from "../pages/Search";
+import Settings from "../pages/Settings";
 
 export default function AppRoutes() {
   return (
@@ -23,6 +24,7 @@ export default function AppRoutes() {
         <Route path="/messaging" element={<Messaging />} />
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/search" element={<Search />} />
+        <Route path="/settings" element={<Settings />} />
       </Route>
     </Routes>
   );

@@ -3,7 +3,8 @@ import { useNotification } from "../contexts/NotificationContext";
 import { FaBell } from "react-icons/fa";
 import { useAuth } from "../contexts/AuthContext";
 import { useState, useRef, useEffect } from "react";
-import { Search, X, Clock, User, Briefcase, Building2, FileText } from "lucide-react";
+import { Search, X, Clock, User, Briefcase, Building2, FileText, Crown } from "lucide-react";
+import { PremiumModal } from "../pages/Settings";
 
 const navItems = [
   { to: "/feed", label: "Home", icon: "home" },
@@ -45,6 +46,9 @@ export default function Navbar() {
   const { unreadCount } = useNotification ? useNotification() : { unreadCount: 0 };
   const location = useLocation();
   const navigate = useNavigate();
+  
+  // Premium modal state
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
   
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
@@ -361,12 +365,24 @@ export default function Navbar() {
             </Link>
           </div>
         </div>
+        {/* Try Premium */}
+        <button
+          onClick={() => setShowPremiumModal(true)}
+          className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-800 rounded-full text-xs font-medium hover:from-amber-200 hover:to-yellow-200 transition-colors"
+        >
+          <Crown className="w-3.5 h-3.5" />
+          Try Premium
+        </button>
+
         {/* Work grid icon */}
         <button className="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
           <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
           <span className="hidden md:inline ml-1 text-xs font-medium">Work</span>
         </button>
       </div>
+
+      {/* Premium Modal */}
+      <PremiumModal isOpen={showPremiumModal} onClose={() => setShowPremiumModal(false)} />
     </nav>
   );
 }
