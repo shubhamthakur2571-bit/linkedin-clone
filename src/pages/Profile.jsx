@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useProfile } from "../contexts/ProfileContext";
 import SlideInModal from "../components/SlideInModal";
+import { useInView } from "../hooks/useInView";
+import { useCountUp } from "../hooks/useCountUp";
 import {
   Pencil,
   Plus,
@@ -365,9 +367,7 @@ function CoverIntroSection({
               Contact info
             </button>
           </div>
-          <button className="text-sm text-blue-600 hover:underline font-semibold mt-1">
-            {profile.connections} connections
-          </button>
+          <ConnectionsCounter connections={profile.connections || 312} />
         </div>
 
         {/* Open to Work toggle - only for own profile */}
@@ -999,6 +999,35 @@ const POPULAR_SKILLS = [
   "Leadership", "Communication", "Problem Solving", "Critical Thinking",
 ];
 
+function AnimatedSkillBar({ skill, index }) {
+  const { ref, inView } = useInView({ threshold: 0.2, triggerOnce: true });
+  // Calculate width based on endorsements (max 99+)
+  const maxEndorsements = 50;
+  const widthPercentage = Math.min((skill.endorsements / maxEndorsements) * 100, 100);
+
+  return (
+    <div ref={ref} className="space-y-1">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+          {skill.name}
+        </span>
+        <span className="text-xs text-gray-500 dark:text-gray-400">
+          {skill.endorsements} endorsements
+        </span>
+      </div>
+      <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+        <div
+          className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-1000 ease-out"
+          style={{
+            width: inView ? `${widthPercentage}%` : "0%",
+            transitionDelay: `${index * 100}ms`,
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
 function SkillsSection({
   profile,
   isOwnProfile,
@@ -1014,22 +1043,31 @@ function SkillsSection({
     : profile.skills.slice(0, 6);
 
   return (
-    <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <section className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
       <SectionHeader
         title="Skills"
         onAdd={isOwnProfile ? () => openModal("addSkill") : null}
         onEdit={isOwnProfile ? () => openModal("editSkills") : null}
       />
+
+      {/* Animated Skill Bars */}
+      <div className="mt-4 space-y-3">
+        {visibleSkills.slice(0, 4).map((skill, index) => (
+          <AnimatedSkillBar key={skill.id} skill={skill} index={index} />
+        ))}
+      </div>
+
+      {/* Skill Tags */}
       <div className="mt-4 flex flex-wrap gap-2">
         {visibleSkills.map((skill) => (
           <div
             key={skill.id}
-            className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-full px-4 py-2 hover:bg-blue-100 transition-colors cursor-default group"
+            className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-full px-3 py-1.5 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors cursor-default"
           >
-            <span className="text-sm font-medium text-blue-800">
+            <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
               {skill.name}
             </span>
-            <span className="bg-blue-600 text-white text-xs font-bold rounded-full px-2 py-0.5 min-w-[24px] text-center">
+            <span className="bg-blue-600 text-white text-xs font-bold rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
               {skill.endorsements}
             </span>
           </div>
@@ -1753,5 +1791,47 @@ function SaveButton({ onClick, disabled }) {
         Save
       </button>
     </div>
+  );
+}
+
+// Animated connections counter component
+function ConnectionsCounter({ connections }) {
+  const { ref, inView } = useInView({ threshold: 0.5, triggerOnce: true });
+  const [displayCount, setDisplayCount] = useState(0);
+
+  useEffect(() => {
+    if (!inView) return;
+
+    const duration = 1500; // Animation duration in ms
+    const startTime = Date.now();
+    const startValue = 0;
+
+    const animate = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      // Easing function: easeOutQuart
+      const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+      const currentValue = Math.floor(startValue + (connections - startValue) * easeOutQuart);
+
+      setDisplayCount(currentValue);
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        setDisplayCount(connections);
+      }
+    };
+
+    requestAnimationFrame(animate);
+  }, [inView, connections]);
+
+  return (
+    <button
+      ref={ref}
+      className="text-sm text-blue-600 hover:underline font-semibold mt-1"
+    >
+      {displayCount.toLocaleString()} connections
+    </button>
   );
 }

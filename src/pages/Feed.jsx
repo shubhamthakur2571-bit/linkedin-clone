@@ -1,7 +1,20 @@
 import { useMemo, useRef, useState, useEffect } from "react";
 import { FaPlus, FaChevronLeft, FaChevronRight, FaTimes } from "react-icons/fa";
+import { Sparkles, Calendar } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
+import { useToast } from "../contexts/ToastContext";
+import { SkeletonPost, SkeletonList } from "../components/Skeleton";
+import { useInView } from "../hooks/useInView";
+
+// AI Generated Post Templates
+const AI_POST_TEMPLATES = [
+  "Just wrapped up an amazing week of learning and growth! 🚀 Excited to share that I've been exploring new ways to leverage AI in my workflow, and the results have been incredible. The future of work is here, and I'm here for it! What new skills are you building this year? #GrowthMindset #AI #CareerDevelopment",
+  "Reflecting on the power of mentorship today. Having someone who believes in you can change everything. 💡 To all the mentors who've guided me - thank you. And to those earlier in their journey: don't be afraid to reach out. People are more willing to help than you think. #Mentorship #PayItForward #CareerAdvice",
+  "Remote work has taught me that discipline > motivation. 🎯 Some days you don't feel like it, but showing up consistently is what separates good from great. What's your secret to staying productive? #RemoteWork #Productivity #Discipline",
+  "Big announcement! 🎉 I'm thrilled to share that I've completed my certification in [field]. It was challenging, rewarding, and absolutely worth every late night. Never stop investing in yourself! #Certification #ContinuousLearning #Achievement",
+  "Hot take: Your network is your net worth isn't just a cliché - it's reality. 🤝 I've seen more doors open through genuine relationships than perfect resumes. Start conversations, offer value, stay curious. #Networking #CareerTips #ProfessionalGrowth",
+];
 
 const REACTIONS = [
   { id: "like", label: "Like", emoji: "👍" },
@@ -281,6 +294,19 @@ export default function Feed() {
   const [audience, setAudience] = useState("Anyone");
   const [showEmoji, setShowEmoji] = useState(false);
 
+  // AI Assistant state
+  const [showAiPanel, setShowAiPanel] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiGeneratedText, setAiGeneratedText] = useState("");
+  const [aiResponseIndex, setAiResponseIndex] = useState(0);
+  const [displayedText, setDisplayedText] = useState("");
+
+  // Skeleton loading state
+  const [isLoading, setIsLoading] = useState(true);
+
+  const { showToast } = useToast();
+
   const [likedPosts, setLikedPosts] = useState(() => new Set());
   const [reactionByPostId, setReactionByPostId] = useState({});
   const [bouncingLikePostId, setBouncingLikePostId] = useState(null);
@@ -302,6 +328,55 @@ export default function Feed() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location?.state]);
+
+  // Skeleton loading simulation
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // AI typing animation effect
+  useEffect(() => {
+    if (!aiGenerating || !aiGeneratedText) return;
+
+    let currentIndex = 0;
+    setDisplayedText("");
+
+    const interval = setInterval(() => {
+      if (currentIndex < aiGeneratedText.length) {
+        setDisplayedText(aiGeneratedText.slice(0, currentIndex + 1));
+        currentIndex++;
+      } else {
+        clearInterval(interval);
+        setAiGenerating(false);
+      }
+    }, 15); // Typing speed
+
+    return () => clearInterval(interval);
+  }, [aiGenerating, aiGeneratedText]);
+
+  const handleAiGenerate = () => {
+    if (!aiPrompt.trim()) return;
+    setAiGenerating(true);
+    setAiGeneratedText(AI_POST_TEMPLATES[aiResponseIndex]);
+  };
+
+  const handleAiRegenerate = () => {
+    const nextIndex = (aiResponseIndex + 1) % AI_POST_TEMPLATES.length;
+    setAiResponseIndex(nextIndex);
+    setAiGenerating(true);
+    setAiGeneratedText(AI_POST_TEMPLATES[nextIndex]);
+  };
+
+  const handleAiUse = () => {
+    setPostDraft(aiGeneratedText);
+    setShowAiPanel(false);
+    setAiPrompt("");
+    setAiGeneratedText("");
+    setDisplayedText("");
+  };
 
   const closeModal = () => {
     setIsModalOpen(false);
@@ -338,6 +413,7 @@ export default function Feed() {
 
     setPosts((prev) => [nextPost, ...prev]);
     closeModal();
+    showToast("Post published successfully!", "success");
   };
 
   const setLikeBounce = (postId) => {
@@ -354,6 +430,7 @@ export default function Feed() {
       next.add(postId);
       return next;
     });
+    showToast("Reaction added!", "success");
   };
 
   const toggleLike = (postId) => {
@@ -419,6 +496,7 @@ export default function Feed() {
       prev.map((p) => (p.id === postId ? { ...p, comments: [...p.comments, nextComment] } : p))
     );
     setCommentDraftByPostId((prev) => ({ ...prev, [postId]: "" }));
+    showToast("Comment posted!", "success");
   };
 
   const incrementRepost = (postId) => {
@@ -426,6 +504,7 @@ export default function Feed() {
       prev.map((p) => (p.id === postId ? { ...p, repostCount: (p.repostCount || 0) + 1 } : p))
     );
     setRepostMenuPostId(null);
+    showToast("Reposted!", "success");
   };
 
   const shareInPost = (postId) => {
@@ -444,7 +523,8 @@ export default function Feed() {
   return (
     <div className="mx-auto max-w-6xl px-3 sm:px-4 pb-10">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <aside className="hidden lg:block lg:col-span-3">
+        <aside className="hidden lg:block lg:col-span-3 space-y-4">
+          {/* Profile Card */}
           <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
             <div className="h-14 bg-gradient-to-r from-blue-600 to-sky-400" />
             <div className="-mt-7 px-4 pb-4">
@@ -462,6 +542,32 @@ export default function Feed() {
               <div className="mt-3 text-xs text-gray-500 dark:text-gray-400">
                 Connections: {currentUser?.connections ?? 312}
               </div>
+            </div>
+          </div>
+
+          {/* Quick Links */}
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+            <div className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Discover</div>
+            <div className="space-y-2">
+              <Link
+                to="/events"
+                className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 transition-colors"
+              >
+                <Calendar className="w-5 h-5 text-blue-600" />
+                <span className="text-sm font-medium">Events</span>
+              </Link>
+              <Link
+                to="/analytics"
+                className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 transition-colors"
+              >
+                <svg className="w-5 h-5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M3 3v18h18" />
+                  <path d="M18 17V9" />
+                  <path d="M13 17V5" />
+                  <path d="M8 17v-3" />
+                </svg>
+                <span className="text-sm font-medium">Analytics</span>
+              </Link>
             </div>
           </div>
         </aside>
@@ -502,7 +608,11 @@ export default function Feed() {
             </div>
           </div>
 
-          {posts.map((post) => {
+          {/* Skeleton Loading */}
+          {isLoading && <SkeletonList count={3} type="post" />}
+
+          {/* Posts */}
+          {!isLoading && posts.map((post, index) => {
             const isLiked = likedPosts.has(post.id);
             const reactionId = reactionByPostId[post.id];
             const likeCount = post.baseLikeCount + (isLiked ? 1 : 0);
@@ -512,8 +622,8 @@ export default function Feed() {
             const repostMenuOpen = repostMenuPostId === post.id;
 
             return (
+              <AnimatedPost key={post.id} index={index}>
               <article
-                key={post.id}
                 className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden"
               >
                 <div className="p-4">
@@ -754,6 +864,7 @@ export default function Feed() {
                   </div>
                 )}
               </article>
+              </AnimatedPost>
             );
           })}
         </section>
@@ -846,6 +957,107 @@ export default function Feed() {
               )}
             </div>
 
+            {/* AI Assistant Panel */}
+            {showAiPanel && (
+              <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/10 dark:to-blue-900/10">
+                <div className="flex items-center gap-2 mb-3">
+                  <Sparkles className="w-5 h-5 text-purple-600" />
+                  <span className="font-semibold text-gray-900 dark:text-gray-100">
+                    AI Writing Assistant
+                  </span>
+                </div>
+
+                {!aiGeneratedText && !aiGenerating && (
+                  <div className="space-y-3">
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                      What do you want to post about?
+                    </p>
+                    <input
+                      type="text"
+                      value={aiPrompt}
+                      onChange={(e) => setAiPrompt(e.target.value)}
+                      placeholder="e.g., Share my thoughts on remote work..."
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleAiGenerate}
+                        disabled={!aiPrompt.trim()}
+                        className={cx(
+                          "px-4 py-2 rounded-full text-sm font-medium",
+                          aiPrompt.trim()
+                            ? "bg-purple-600 text-white hover:bg-purple-700"
+                            : "bg-gray-200 text-gray-500 cursor-not-allowed"
+                        )}
+                      >
+                        ✨ Generate
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowAiPanel(false);
+                          setAiPrompt("");
+                        }}
+                        className="px-4 py-2 rounded-full text-sm font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {(aiGenerating || displayedText) && (
+                  <div className="space-y-3">
+                    <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                      <p className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap min-h-[60px]">
+                        {displayedText}
+                        {aiGenerating && (
+                          <span className="inline-block w-2 h-4 bg-purple-500 ml-1 animate-pulse" />
+                        )}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleAiUse}
+                        disabled={aiGenerating}
+                        className={cx(
+                          "px-4 py-2 rounded-full text-sm font-medium",
+                          aiGenerating
+                            ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                            : "bg-blue-600 text-white hover:bg-blue-700"
+                        )}
+                      >
+                        Use this
+                      </button>
+                      <button
+                        onClick={handleAiRegenerate}
+                        disabled={aiGenerating}
+                        className={cx(
+                          "px-4 py-2 rounded-full text-sm font-medium border",
+                          aiGenerating
+                            ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                            : "border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+                        )}
+                      >
+                        🔄 Regenerate
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowAiPanel(false);
+                          setAiPrompt("");
+                          setAiGeneratedText("");
+                          setDisplayedText("");
+                        }}
+                        disabled={aiGenerating}
+                        className="px-4 py-2 rounded-full text-sm font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-700">
               <div className="flex items-center gap-2">
                 {[
@@ -864,6 +1076,14 @@ export default function Feed() {
                     <span className="text-lg">{t.icon}</span>
                   </button>
                 ))}
+                <button
+                  type="button"
+                  onClick={() => setShowAiPanel(true)}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-900/30 dark:to-blue-900/30 text-purple-700 dark:text-purple-300 text-sm font-medium hover:from-purple-200 hover:to-blue-200 dark:hover:from-purple-900/40 dark:hover:to-blue-900/40 transition-colors"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  Write with AI
+                </button>
               </div>
               <button
                 type="button"
@@ -882,6 +1102,23 @@ export default function Feed() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// Animated Post Component with scroll reveal
+function AnimatedPost({ children, index }) {
+  const { ref, inView } = useInView({ threshold: 0.1, triggerOnce: true });
+
+  return (
+    <div
+      ref={ref}
+      className={`transition-all duration-500 ${
+        inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-5"
+      }`}
+      style={{ transitionDelay: `${index * 100}ms` }}
+    >
+      {children}
     </div>
   );
 }

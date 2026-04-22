@@ -10,6 +10,8 @@ import Messaging from "../pages/Messaging";
 import Notifications from "../pages/Notifications";
 import Search from "../pages/Search";
 import Settings from "../pages/Settings";
+import Analytics from "../pages/Analytics";
+import Events from "../pages/Events";
 
 export default function AppRoutes() {
   return (
@@ -25,6 +27,8 @@ export default function AppRoutes() {
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/search" element={<Search />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/analytics" element={<Analytics />} />
+        <Route path="/events" element={<Events />} />
       </Route>
     </Routes>
   );

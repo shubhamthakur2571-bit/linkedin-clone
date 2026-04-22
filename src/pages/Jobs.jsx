@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Bell,
   Bookmark,
@@ -18,6 +18,7 @@ import {
   Zap,
 } from "lucide-react";
 import useMediaQuery from "../hooks/useMediaQuery.js";
+import { SkeletonJobCard, SkeletonList } from "../components/Skeleton";
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /*                              STATIC DATA                                     */
