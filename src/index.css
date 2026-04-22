@@ -61,6 +61,19 @@
   animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.animate-slideInFromRight {
+  animation: slideInFromRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 /* Smooth scrollbar */
 ::-webkit-scrollbar {
   width: 6px;

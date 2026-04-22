@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { useProfile } from "../contexts/ProfileContext";
-import EditModal from "../components/EditModal";
+import SlideInModal from "../components/SlideInModal";
 import {
   Pencil,
   Plus,
@@ -17,6 +18,13 @@ import {
   Shield,
   Star,
   Users,
+  MessageSquare,
+  Check,
+  X,
+  UserPlus,
+  Flag,
+  Share2,
+  UserCheck,
 } from "lucide-react";
 
 /* ───────────────────── helper: company logo placeholder ───────────────────── */
@@ -40,11 +48,76 @@ function CompanyLogo({ name }) {
   );
 }
 
+/* ───────────────────── helper: connection degree badge ───────────────────── */
+function ConnectionDegreeBadge({ userId }) {
+  // Simple logic: user 2 is 2nd degree, user 3 is 3rd+
+  const degree = userId === "2" ? "2nd" : "3rd+";
+  return (
+    <span className="inline-flex items-center gap-1 text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+      <Users className="w-3 h-3" />
+      {degree}
+    </span>
+  );
+}
+
+/* ───────────────────── helper: dropdown menu ───────────────────── */
+function DropdownMenu({ trigger, items }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useState(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <div onClick={() => setIsOpen(!isOpen)}>{trigger}</div>
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+          {items.map((item, idx) => (
+            <button
+              key={idx}
+              onClick={() => {
+                item.onClick();
+                setIsOpen(false);
+              }}
+              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+            >
+              {item.icon}
+              {item.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /*                              PROFILE PAGE                                  */
 /* ═══════════════════════════════════════════════════════════════════════════ */
 export default function Profile() {
-  const { profile, updateProfile } = useProfile();
+  const { userId } = useParams();
+  const navigate = useNavigate();
+  const {
+    profile: currentUserProfile,
+    updateProfile,
+    getProfileById,
+    sendConnectionRequest,
+    withdrawConnectionRequest,
+    getConnectionStatus,
+  } = useProfile();
+
+  // Get the profile being viewed (current user or other user)
+  const profile = getProfileById(userId) || currentUserProfile;
+  const isOwnProfile = profile.isOwnProfile ?? true;
+  const connectionStatus = getConnectionStatus(userId);
 
   /* ── modal state ── */
   const [activeModal, setActiveModal] = useState(null);
@@ -57,6 +130,18 @@ export default function Profile() {
   /* ── skills expand ── */
   const [showAllSkills, setShowAllSkills] = useState(false);
 
+  const handleConnect = () => {
+    sendConnectionRequest(userId);
+  };
+
+  const handleWithdraw = () => {
+    withdrawConnectionRequest(userId);
+  };
+
+  const handleMessage = () => {
+    navigate("/messaging");
+  };
+
   return (
     <div className="max-w-[1128px] mx-auto px-4 py-4 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
       {/* ══════════ LEFT COLUMN ══════════ */}
@@ -64,73 +149,89 @@ export default function Profile() {
         {/* ─────── 1. COVER + AVATAR + INTRO ─────── */}
         <CoverIntroSection
           profile={profile}
+          isOwnProfile={isOwnProfile}
+          connectionStatus={connectionStatus}
+          onConnect={handleConnect}
+          onWithdraw={handleWithdraw}
+          onMessage={handleMessage}
           updateProfile={updateProfile}
           openModal={openModal}
           activeModal={activeModal}
           closeModal={closeModal}
+          userId={userId}
         />
 
         {/* ─────── 3. ABOUT ─────── */}
         <AboutSection
           profile={profile}
-          updateProfile={updateProfile}
+          isOwnProfile={isOwnProfile}
           aboutExpanded={aboutExpanded}
           setAboutExpanded={setAboutExpanded}
           openModal={openModal}
           activeModal={activeModal}
           closeModal={closeModal}
+          updateProfile={updateProfile}
         />
 
         {/* ─────── 4. EXPERIENCE ─────── */}
         <ExperienceSection
           profile={profile}
-          updateProfile={updateProfile}
+          isOwnProfile={isOwnProfile}
           openModal={openModal}
           activeModal={activeModal}
           closeModal={closeModal}
+          updateProfile={updateProfile}
         />
 
         {/* ─────── 5. EDUCATION ─────── */}
         <EducationSection
           profile={profile}
-          updateProfile={updateProfile}
+          isOwnProfile={isOwnProfile}
           openModal={openModal}
           activeModal={activeModal}
           closeModal={closeModal}
+          updateProfile={updateProfile}
         />
 
         {/* ─────── 6. SKILLS ─────── */}
         <SkillsSection
           profile={profile}
-          updateProfile={updateProfile}
+          isOwnProfile={isOwnProfile}
           showAllSkills={showAllSkills}
           setShowAllSkills={setShowAllSkills}
           openModal={openModal}
           activeModal={activeModal}
           closeModal={closeModal}
+          updateProfile={updateProfile}
         />
 
         {/* ─────── 7. RECOMMENDATIONS ─────── */}
         <RecommendationsSection
           profile={profile}
-          updateProfile={updateProfile}
+          isOwnProfile={isOwnProfile}
           openModal={openModal}
           activeModal={activeModal}
           closeModal={closeModal}
+          updateProfile={updateProfile}
         />
 
         {/* ─────── 8. ACCOMPLISHMENTS ─────── */}
         <AccomplishmentsSection
           profile={profile}
-          updateProfile={updateProfile}
+          isOwnProfile={isOwnProfile}
           openModal={openModal}
           activeModal={activeModal}
           closeModal={closeModal}
+          updateProfile={updateProfile}
         />
       </div>
 
       {/* ══════════ RIGHT SIDEBAR ══════════ */}
-      <RightSidebar profile={profile} />
+      <RightSidebar
+        profile={profile}
+        isOwnProfile={isOwnProfile}
+        userId={userId}
+      />
     </div>
   );
 }
@@ -140,10 +241,16 @@ export default function Profile() {
 /* ═══════════════════════════════════════════════════════════════════════════ */
 function CoverIntroSection({
   profile,
+  isOwnProfile,
+  connectionStatus,
+  onConnect,
+  onWithdraw,
+  onMessage,
   updateProfile,
   openModal,
   activeModal,
   closeModal,
+  userId,
 }) {
   return (
     <section className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -177,16 +284,60 @@ function CoverIntroSection({
 
         {/* Action Buttons (top right, relative to card) */}
         <div className="absolute top-4 right-4 flex gap-2">
-          <button
-            onClick={() => openModal("editIntro")}
-            className="bg-white/90 hover:bg-white px-4 py-1.5 rounded-full text-sm font-semibold text-gray-700 border border-gray-300 shadow-sm transition-all hover:shadow"
-          >
-            <Pencil className="w-4 h-4 inline mr-1" />
-            Edit profile
-          </button>
-          <button className="bg-white/90 hover:bg-white p-2 rounded-full border border-gray-300 shadow-sm transition-all hover:shadow">
-            <MoreHorizontal className="w-4 h-4 text-gray-700" />
-          </button>
+          {isOwnProfile ? (
+            <>
+              <button
+                onClick={() => openModal("editIntro")}
+                className="bg-white/90 hover:bg-white px-4 py-1.5 rounded-full text-sm font-semibold text-gray-700 border border-gray-300 shadow-sm transition-all hover:shadow"
+              >
+                <Pencil className="w-4 h-4 inline mr-1" />
+                Edit profile
+              </button>
+              <button className="bg-white/90 hover:bg-white p-2 rounded-full border border-gray-300 shadow-sm transition-all hover:shadow">
+                <MoreHorizontal className="w-4 h-4 text-gray-700" />
+              </button>
+            </>
+          ) : (
+            <>
+              {/* Visitor View Buttons */}
+              {connectionStatus === "pending" ? (
+                <button
+                  onClick={onWithdraw}
+                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-1.5 rounded-full text-sm font-semibold border border-gray-300 transition-colors flex items-center gap-1"
+                >
+                  <Check className="w-4 h-4" />
+                  Pending
+                </button>
+              ) : (
+                <button
+                  onClick={onConnect}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-full text-sm font-semibold transition-colors flex items-center gap-1"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  Connect
+                </button>
+              )}
+              <button
+                onClick={onMessage}
+                className="border border-blue-600 text-blue-600 hover:bg-blue-50 px-4 py-1.5 rounded-full text-sm font-semibold transition-colors flex items-center gap-1"
+              >
+                <MessageSquare className="w-4 h-4" />
+                Message
+              </button>
+              <DropdownMenu
+                trigger={
+                  <button className="border border-gray-400 text-gray-600 hover:bg-gray-50 p-2 rounded-full transition-colors">
+                    <MoreHorizontal className="w-4 h-4" />
+                  </button>
+                }
+                items={[
+                  { label: "Follow", icon: <UserCheck className="w-4 h-4" />, onClick: () => {} },
+                  { label: "Share profile", icon: <Share2 className="w-4 h-4" />, onClick: () => {} },
+                  { label: "Report/Block", icon: <Flag className="w-4 h-4" />, onClick: () => {} },
+                ]}
+              />
+            </>
+          )}
         </div>
 
         {/* Name, headline, location */}
@@ -195,6 +346,7 @@ function CoverIntroSection({
             <h1 className="text-2xl font-bold text-gray-900">
               {profile.name}
             </h1>
+            {!isOwnProfile && userId && <ConnectionDegreeBadge userId={userId} />}
             {profile.pronouns && (
               <span className="text-sm text-gray-500 font-normal">
                 ({profile.pronouns})
@@ -218,47 +370,51 @@ function CoverIntroSection({
           </button>
         </div>
 
-        {/* Open to Work toggle */}
-        <div className="mt-3 flex items-center gap-2">
-          <label className="flex items-center gap-2 cursor-pointer select-none">
-            <div className="relative">
-              <input
-                type="checkbox"
-                checked={profile.openToWork}
-                onChange={() =>
-                  updateProfile("openToWork", !profile.openToWork)
-                }
-                className="sr-only"
-              />
-              <div
-                className={`w-9 h-5 rounded-full transition-colors ${
-                  profile.openToWork ? "bg-emerald-500" : "bg-gray-300"
-                }`}
-              />
-              <div
-                className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
-                  profile.openToWork ? "translate-x-4" : ""
-                }`}
-              />
-            </div>
-            <span className="text-sm font-medium text-gray-700">
-              Open to Work
-            </span>
-          </label>
-        </div>
+        {/* Open to Work toggle - only for own profile */}
+        {isOwnProfile && (
+          <div className="mt-3 flex items-center gap-2">
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <div className="relative">
+                <input
+                  type="checkbox"
+                  checked={profile.openToWork}
+                  onChange={() =>
+                    updateProfile("openToWork", !profile.openToWork)
+                  }
+                  className="sr-only"
+                />
+                <div
+                  className={`w-9 h-5 rounded-full transition-colors ${
+                    profile.openToWork ? "bg-emerald-500" : "bg-gray-300"
+                  }`}
+                />
+                <div
+                  className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                    profile.openToWork ? "translate-x-4" : ""
+                  }`}
+                />
+              </div>
+              <span className="text-sm font-medium text-gray-700">
+                Open to Work
+              </span>
+            </label>
+          </div>
+        )}
 
-        {/* CTA Buttons */}
-        <div className="flex flex-wrap gap-2 mt-4">
-          <button className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-1.5 rounded-full text-sm font-semibold transition-colors shadow-sm">
-            Open to
-          </button>
-          <button className="border border-blue-600 text-blue-600 hover:bg-blue-50 px-5 py-1.5 rounded-full text-sm font-semibold transition-colors">
-            Add section
-          </button>
-          <button className="border border-gray-400 text-gray-600 hover:bg-gray-50 px-5 py-1.5 rounded-full text-sm font-semibold transition-colors">
-            More
-          </button>
-        </div>
+        {/* CTA Buttons - only for own profile */}
+        {isOwnProfile && (
+          <div className="flex flex-wrap gap-2 mt-4">
+            <button className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-1.5 rounded-full text-sm font-semibold transition-colors shadow-sm">
+              Open to
+            </button>
+            <button className="border border-blue-600 text-blue-600 hover:bg-blue-50 px-5 py-1.5 rounded-full text-sm font-semibold transition-colors">
+              Add section
+            </button>
+            <button className="border border-gray-400 text-gray-600 hover:bg-gray-50 px-5 py-1.5 rounded-full text-sm font-semibold transition-colors">
+              More
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Edit Intro Modal */}
@@ -287,6 +443,8 @@ function EditIntroModal({ profile, updateProfile, isOpen, closeModal }) {
     pronouns: profile.pronouns,
     headline: profile.headline,
     location: profile.location,
+    website: profile.website || "",
+    customUrl: profile.customUrl || "",
   });
 
   const handleSave = () => {
@@ -294,11 +452,13 @@ function EditIntroModal({ profile, updateProfile, isOpen, closeModal }) {
     updateProfile("pronouns", form.pronouns);
     updateProfile("headline", form.headline);
     updateProfile("location", form.location);
+    updateProfile("website", form.website);
+    updateProfile("customUrl", form.customUrl);
     closeModal();
   };
 
   return (
-    <EditModal isOpen={isOpen} onClose={closeModal} title="Edit intro">
+    <SlideInModal isOpen={isOpen} onClose={closeModal} title="Edit intro">
       <div className="space-y-4">
         <FormField
           label="Name"
@@ -320,9 +480,19 @@ function EditIntroModal({ profile, updateProfile, isOpen, closeModal }) {
           value={form.location}
           onChange={(v) => setForm({ ...form, location: v })}
         />
+        <FormField
+          label="Website URL"
+          value={form.website}
+          onChange={(v) => setForm({ ...form, website: v })}
+        />
+        <FormField
+          label="Custom URL"
+          value={form.customUrl}
+          onChange={(v) => setForm({ ...form, customUrl: v })}
+        />
         <SaveButton onClick={handleSave} />
       </div>
-    </EditModal>
+    </SlideInModal>
   );
 }
 
@@ -336,7 +506,7 @@ function ContactInfoModal({ profile, updateProfile, isOpen, closeModal }) {
   };
 
   return (
-    <EditModal isOpen={isOpen} onClose={closeModal} title="Contact info">
+    <SlideInModal isOpen={isOpen} onClose={closeModal} title="Contact info">
       <div className="space-y-4">
         <FormField
           label="Email"
@@ -360,7 +530,7 @@ function ContactInfoModal({ profile, updateProfile, isOpen, closeModal }) {
         />
         <SaveButton onClick={handleSave} />
       </div>
-    </EditModal>
+    </SlideInModal>
   );
 }
 
@@ -369,12 +539,13 @@ function ContactInfoModal({ profile, updateProfile, isOpen, closeModal }) {
 /* ═══════════════════════════════════════════════════════════════════════════ */
 function AboutSection({
   profile,
-  updateProfile,
+  isOwnProfile,
   aboutExpanded,
   setAboutExpanded,
   openModal,
   activeModal,
   closeModal,
+  updateProfile,
 }) {
   const lines = profile.about.split("\n");
   const previewText = lines.slice(0, 3).join("\n");
@@ -384,7 +555,7 @@ function AboutSection({
     <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       <SectionHeader
         title="About"
-        onEdit={() => openModal("editAbout")}
+        onEdit={isOwnProfile ? () => openModal("editAbout") : null}
       />
       <div className="mt-3 text-sm text-gray-700 leading-relaxed whitespace-pre-line">
         {aboutExpanded || !needsTruncate ? profile.about : previewText + "…"}
@@ -407,37 +578,46 @@ function AboutSection({
       )}
 
       {/* Edit About Modal */}
-      <EditModal
-        isOpen={activeModal === "editAbout"}
-        onClose={closeModal}
-        title="Edit About"
-      >
+      <SlideInModal isOpen={activeModal === "editAbout"} onClose={closeModal} title="Edit About">
         <EditAboutForm
           profile={profile}
           updateProfile={updateProfile}
           closeModal={closeModal}
         />
-      </EditModal>
+      </SlideInModal>
     </section>
   );
 }
 
 function EditAboutForm({ profile, updateProfile, closeModal }) {
   const [text, setText] = useState(profile.about);
+  const MAX_CHARS = 2600;
+  const charCount = text.length;
+
   const handleSave = () => {
-    updateProfile("about", text);
-    closeModal();
+    if (charCount <= MAX_CHARS) {
+      updateProfile("about", text);
+      closeModal();
+    }
   };
+
   return (
     <div className="space-y-4">
-      <textarea
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        rows={8}
-        className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none transition-shadow"
-        placeholder="Tell people about yourself..."
-      />
-      <SaveButton onClick={handleSave} />
+      <div>
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          rows={8}
+          className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none transition-shadow"
+          placeholder="Tell people about yourself..."
+        />
+        <div className="flex justify-end mt-1">
+          <span className={`text-xs ${charCount > MAX_CHARS ? 'text-red-500' : 'text-gray-500'}`}>
+            {charCount}/{MAX_CHARS}
+          </span>
+        </div>
+      </div>
+      <SaveButton onClick={handleSave} disabled={charCount > MAX_CHARS} />
     </div>
   );
 }
@@ -447,10 +627,11 @@ function EditAboutForm({ profile, updateProfile, closeModal }) {
 /* ═══════════════════════════════════════════════════════════════════════════ */
 function ExperienceSection({
   profile,
-  updateProfile,
+  isOwnProfile,
   openModal,
   activeModal,
   closeModal,
+  updateProfile,
 }) {
   const [editingExp, setEditingExp] = useState(null);
 
@@ -458,7 +639,7 @@ function ExperienceSection({
     <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       <SectionHeader
         title="Experience"
-        onAdd={() => {
+        onAdd={isOwnProfile ? () => {
           setEditingExp({
             id: Date.now(),
             role: "",
@@ -467,10 +648,11 @@ function ExperienceSection({
             endDate: "",
             location: "",
             description: "",
+            current: false,
           });
           openModal("editExperience");
-        }}
-        onEdit={() => openModal("editExperience")}
+        } : null}
+        onEdit={isOwnProfile ? () => openModal("editExperience") : null}
       />
 
       <div className="mt-4 divide-y divide-gray-100">
@@ -488,19 +670,21 @@ function ExperienceSection({
                   </h3>
                   <p className="text-sm text-gray-700">{exp.company}</p>
                   <p className="text-sm text-gray-500">
-                    {exp.startDate} – {exp.endDate}
+                    {exp.startDate} – {exp.current ? "Present" : exp.endDate}
                   </p>
                   <p className="text-sm text-gray-500">{exp.location}</p>
                 </div>
-                <button
-                  onClick={() => {
-                    setEditingExp(exp);
-                    openModal("editExperience");
-                  }}
-                  className="opacity-0 group-hover:opacity-100 p-1.5 rounded-full hover:bg-gray-100 transition-all"
-                >
-                  <Pencil className="w-4 h-4 text-gray-500" />
-                </button>
+                {isOwnProfile && (
+                  <button
+                    onClick={() => {
+                      setEditingExp(exp);
+                      openModal("editExperience");
+                    }}
+                    className="opacity-0 group-hover:opacity-100 p-1.5 rounded-full hover:bg-gray-100 transition-all"
+                  >
+                    <Pencil className="w-4 h-4 text-gray-500" />
+                  </button>
+                )}
               </div>
               {exp.description && (
                 <p className="mt-2 text-sm text-gray-600 leading-relaxed">
@@ -513,13 +697,13 @@ function ExperienceSection({
       </div>
 
       {/* Edit Experience Modal */}
-      <EditModal
+      <SlideInModal
         isOpen={activeModal === "editExperience"}
         onClose={() => {
           setEditingExp(null);
           closeModal();
         }}
-        title="Edit Experience"
+        title={editingExp?.role ? "Edit Experience" : "Add Experience"}
       >
         {editingExp && (
           <EditExperienceForm
@@ -532,7 +716,7 @@ function ExperienceSection({
             }}
           />
         )}
-      </EditModal>
+      </SlideInModal>
     </section>
   );
 }
@@ -543,18 +727,30 @@ function EditExperienceForm({
   updateProfile,
   closeModal,
 }) {
-  const [form, setForm] = useState({ ...experience });
+  const [form, setForm] = useState({ ...experience, current: experience.current || false });
 
   const handleSave = () => {
     const exists = allExperience.find((e) => e.id === form.id);
+    const dataToSave = {
+      ...form,
+      endDate: form.current ? "" : form.endDate,
+    };
     if (exists) {
       updateProfile(
         "experience",
-        allExperience.map((e) => (e.id === form.id ? form : e))
+        allExperience.map((e) => (e.id === form.id ? dataToSave : e))
       );
     } else {
-      updateProfile("experience", [...allExperience, form]);
+      updateProfile("experience", [...allExperience, dataToSave]);
     }
+    closeModal();
+  };
+
+  const handleDelete = () => {
+    updateProfile(
+      "experience",
+      allExperience.filter((e) => e.id !== form.id)
+    );
     closeModal();
   };
 
@@ -576,12 +772,24 @@ function EditExperienceForm({
           value={form.startDate}
           onChange={(v) => setForm({ ...form, startDate: v })}
         />
-        <FormField
-          label="End Date"
-          value={form.endDate}
-          onChange={(v) => setForm({ ...form, endDate: v })}
-        />
+        {!form.current && (
+          <FormField
+            label="End Date"
+            value={form.endDate}
+            onChange={(v) => setForm({ ...form, endDate: v })}
+          />
+        )}
       </div>
+      {/* Currently working checkbox */}
+      <label className="flex items-center gap-2 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={form.current}
+          onChange={(e) => setForm({ ...form, current: e.target.checked })}
+          className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+        />
+        <span className="text-sm text-gray-700">I currently work here</span>
+      </label>
       <FormField
         label="Location"
         value={form.location}
@@ -598,7 +806,15 @@ function EditExperienceForm({
           className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none transition-shadow"
         />
       </div>
-      <SaveButton onClick={handleSave} />
+      <div className="flex items-center justify-between pt-2">
+        <button
+          onClick={handleDelete}
+          className="text-red-600 hover:text-red-700 text-sm font-semibold px-4 py-2 rounded-full hover:bg-red-50 transition-colors"
+        >
+          Delete this experience
+        </button>
+        <SaveButton onClick={handleSave} />
+      </div>
     </div>
   );
 }
@@ -608,10 +824,11 @@ function EditExperienceForm({
 /* ═══════════════════════════════════════════════════════════════════════════ */
 function EducationSection({
   profile,
-  updateProfile,
+  isOwnProfile,
   openModal,
   activeModal,
   closeModal,
+  updateProfile,
 }) {
   const [editingEdu, setEditingEdu] = useState(null);
 
@@ -619,17 +836,18 @@ function EducationSection({
     <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       <SectionHeader
         title="Education"
-        onAdd={() => {
+        onAdd={isOwnProfile ? () => {
           setEditingEdu({
             id: Date.now(),
             institution: "",
             degree: "",
+            fieldOfStudy: "",
             startYear: "",
             endYear: "",
           });
           openModal("editEducation");
-        }}
-        onEdit={() => openModal("editEducation")}
+        } : null}
+        onEdit={isOwnProfile ? () => openModal("editEducation") : null}
       />
 
       <div className="mt-4 divide-y divide-gray-100">
@@ -647,20 +865,25 @@ function EducationSection({
                   <h3 className="text-base font-semibold text-gray-900">
                     {edu.institution}
                   </h3>
-                  <p className="text-sm text-gray-700">{edu.degree}</p>
+                  <p className="text-sm text-gray-700">
+                    {edu.degree}
+                    {edu.fieldOfStudy && `, ${edu.fieldOfStudy}`}
+                  </p>
                   <p className="text-sm text-gray-500">
                     {edu.startYear} – {edu.endYear}
                   </p>
                 </div>
-                <button
-                  onClick={() => {
-                    setEditingEdu(edu);
-                    openModal("editEducation");
-                  }}
-                  className="opacity-0 group-hover:opacity-100 p-1.5 rounded-full hover:bg-gray-100 transition-all"
-                >
-                  <Pencil className="w-4 h-4 text-gray-500" />
-                </button>
+                {isOwnProfile && (
+                  <button
+                    onClick={() => {
+                      setEditingEdu(edu);
+                      openModal("editEducation");
+                    }}
+                    className="opacity-0 group-hover:opacity-100 p-1.5 rounded-full hover:bg-gray-100 transition-all"
+                  >
+                    <Pencil className="w-4 h-4 text-gray-500" />
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -668,13 +891,13 @@ function EducationSection({
       </div>
 
       {/* Edit Education Modal */}
-      <EditModal
+      <SlideInModal
         isOpen={activeModal === "editEducation"}
         onClose={() => {
           setEditingEdu(null);
           closeModal();
         }}
-        title="Edit Education"
+        title={editingEdu?.institution ? "Edit Education" : "Add Education"}
       >
         {editingEdu && (
           <EditEducationForm
@@ -687,7 +910,7 @@ function EducationSection({
             }}
           />
         )}
-      </EditModal>
+      </SlideInModal>
     </section>
   );
 }
@@ -698,7 +921,7 @@ function EditEducationForm({
   updateProfile,
   closeModal,
 }) {
-  const [form, setForm] = useState({ ...education });
+  const [form, setForm] = useState({ ...education, fieldOfStudy: education.fieldOfStudy || "" });
 
   const handleSave = () => {
     const exists = allEducation.find((e) => e.id === form.id);
@@ -713,10 +936,18 @@ function EditEducationForm({
     closeModal();
   };
 
+  const handleDelete = () => {
+    updateProfile(
+      "education",
+      allEducation.filter((e) => e.id !== form.id)
+    );
+    closeModal();
+  };
+
   return (
     <div className="space-y-4">
       <FormField
-        label="Institution"
+        label="School"
         value={form.institution}
         onChange={(v) => setForm({ ...form, institution: v })}
       />
@@ -724,6 +955,11 @@ function EditEducationForm({
         label="Degree"
         value={form.degree}
         onChange={(v) => setForm({ ...form, degree: v })}
+      />
+      <FormField
+        label="Field of study"
+        value={form.fieldOfStudy}
+        onChange={(v) => setForm({ ...form, fieldOfStudy: v })}
       />
       <div className="grid grid-cols-2 gap-3">
         <FormField
@@ -737,7 +973,15 @@ function EditEducationForm({
           onChange={(v) => setForm({ ...form, endYear: v })}
         />
       </div>
-      <SaveButton onClick={handleSave} />
+      <div className="flex items-center justify-between pt-2">
+        <button
+          onClick={handleDelete}
+          className="text-red-600 hover:text-red-700 text-sm font-semibold px-4 py-2 rounded-full hover:bg-red-50 transition-colors"
+        >
+          Delete
+        </button>
+        <SaveButton onClick={handleSave} />
+      </div>
     </div>
   );
 }
@@ -745,14 +989,25 @@ function EditEducationForm({
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /*                              6.  SKILLS                                    */
 /* ═══════════════════════════════════════════════════════════════════════════ */
+// Popular skills for suggestions
+const POPULAR_SKILLS = [
+  "React", "JavaScript", "TypeScript", "Node.js", "Python", "Java", "C++",
+  "HTML", "CSS", "SQL", "MongoDB", "PostgreSQL", "AWS", "Docker", "Kubernetes",
+  "Git", "GitHub", "Figma", "Adobe XD", "Sketch", "UI Design", "UX Design",
+  "Product Management", "Agile", "Scrum", "Data Analysis", "Machine Learning",
+  "TensorFlow", "PyTorch", "Tableau", "Power BI", "Excel", "Project Management",
+  "Leadership", "Communication", "Problem Solving", "Critical Thinking",
+];
+
 function SkillsSection({
   profile,
-  updateProfile,
+  isOwnProfile,
   showAllSkills,
   setShowAllSkills,
   openModal,
   activeModal,
   closeModal,
+  updateProfile,
 }) {
   const visibleSkills = showAllSkills
     ? profile.skills
@@ -762,8 +1017,8 @@ function SkillsSection({
     <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       <SectionHeader
         title="Skills"
-        onAdd={() => openModal("addSkill")}
-        onEdit={() => openModal("editSkills")}
+        onAdd={isOwnProfile ? () => openModal("addSkill") : null}
+        onEdit={isOwnProfile ? () => openModal("editSkills") : null}
       />
       <div className="mt-4 flex flex-wrap gap-2">
         {visibleSkills.map((skill) => (
@@ -798,7 +1053,7 @@ function SkillsSection({
       )}
 
       {/* Add Skill Modal */}
-      <EditModal
+      <SlideInModal
         isOpen={activeModal === "addSkill"}
         onClose={closeModal}
         title="Add Skill"
@@ -808,10 +1063,10 @@ function SkillsSection({
           updateProfile={updateProfile}
           closeModal={closeModal}
         />
-      </EditModal>
+      </SlideInModal>
 
       {/* Edit Skills Modal */}
-      <EditModal
+      <SlideInModal
         isOpen={activeModal === "editSkills"}
         onClose={closeModal}
         title="Edit Skills"
@@ -821,25 +1076,61 @@ function SkillsSection({
           updateProfile={updateProfile}
           closeModal={closeModal}
         />
-      </EditModal>
+      </SlideInModal>
     </section>
   );
 }
 
 function AddSkillForm({ skills, updateProfile, closeModal }) {
-  const [name, setName] = useState("");
-  const handleSave = () => {
-    if (!name.trim()) return;
+  const [search, setSearch] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  const existingSkillNames = skills.map((s) => s.name.toLowerCase());
+  const filteredSuggestions = POPULAR_SKILLS.filter(
+    (skill) =>
+      skill.toLowerCase().includes(search.toLowerCase()) &&
+      !existingSkillNames.includes(skill.toLowerCase())
+  ).slice(0, 6);
+
+  const handleSave = (skillName = search) => {
+    if (!skillName.trim()) return;
+    if (existingSkillNames.includes(skillName.toLowerCase())) {
+      alert("You already have this skill!");
+      return;
+    }
     updateProfile("skills", [
       ...skills,
-      { id: Date.now(), name: name.trim(), endorsements: 0 },
+      { id: Date.now(), name: skillName.trim(), endorsements: 0 },
     ]);
     closeModal();
   };
+
   return (
     <div className="space-y-4">
-      <FormField label="Skill Name" value={name} onChange={setName} />
-      <SaveButton onClick={handleSave} />
+      <div className="relative">
+        <FormField
+          label="Skill"
+          value={search}
+          onChange={(v) => {
+            setSearch(v);
+            setShowSuggestions(true);
+          }}
+        />
+        {showSuggestions && search && filteredSuggestions.length > 0 && (
+          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+            {filteredSuggestions.map((skill) => (
+              <button
+                key={skill}
+                onClick={() => handleSave(skill)}
+                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg"
+              >
+                {skill}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+      <SaveButton onClick={() => handleSave()} />
     </div>
   );
 }
@@ -853,6 +1144,9 @@ function EditSkillsForm({ skills, updateProfile, closeModal }) {
   };
   return (
     <div className="space-y-4">
+      {items.length === 0 && (
+        <p className="text-sm text-gray-500 text-center py-4">No skills added yet.</p>
+      )}
       {items.map((skill) => (
         <div key={skill.id} className="flex items-center gap-3">
           <span className="flex-1 text-sm">{skill.name}</span>
@@ -877,6 +1171,7 @@ function EditSkillsForm({ skills, updateProfile, closeModal }) {
 /* ═══════════════════════════════════════════════════════════════════════════ */
 function RecommendationsSection({
   profile,
+  isOwnProfile,
   updateProfile,
   openModal,
   activeModal,
@@ -886,7 +1181,10 @@ function RecommendationsSection({
 
   return (
     <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <SectionHeader title="Recommendations" />
+      <SectionHeader
+        title="Recommendations"
+        onEdit={isOwnProfile && profile.recommendations.length > 0 ? () => openModal("editRecommendations") : null}
+      />
 
       {/* Tabs */}
       <div className="flex gap-4 mt-3 border-b border-gray-200">
@@ -914,6 +1212,11 @@ function RecommendationsSection({
 
       {tab === "received" && (
         <div className="mt-4 divide-y divide-gray-100">
+          {profile.recommendations.length === 0 && (
+            <div className="py-8 text-center text-sm text-gray-400">
+              No recommendations received yet.
+            </div>
+          )}
           {profile.recommendations.map((rec) => (
             <div key={rec.id} className="py-4 first:pt-2 last:pb-0 flex gap-4">
               <img
@@ -942,7 +1245,7 @@ function RecommendationsSection({
       )}
 
       {/* Edit Recommendations Modal */}
-      <EditModal
+      <SlideInModal
         isOpen={activeModal === "editRecommendations"}
         onClose={closeModal}
         title="Edit Recommendations"
@@ -952,7 +1255,7 @@ function RecommendationsSection({
           updateProfile={updateProfile}
           closeModal={closeModal}
         />
-      </EditModal>
+      </SlideInModal>
     </section>
   );
 }
@@ -1012,6 +1315,7 @@ function EditRecommendationsForm({
 /* ═══════════════════════════════════════════════════════════════════════════ */
 function AccomplishmentsSection({
   profile,
+  isOwnProfile,
   updateProfile,
   openModal,
   activeModal,
@@ -1042,15 +1346,17 @@ function AccomplishmentsSection({
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                openModal("editCertifications");
-              }}
-              className="p-1 rounded-full hover:bg-gray-100 transition-colors"
-            >
-              <Pencil className="w-4 h-4 text-gray-500" />
-            </button>
+            {isOwnProfile && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openModal("editCertifications");
+                }}
+                className="p-1 rounded-full hover:bg-gray-100 transition-colors"
+              >
+                <Pencil className="w-4 h-4 text-gray-500" />
+              </button>
+            )}
             {certExpanded ? (
               <ChevronUp className="w-4 h-4 text-gray-500" />
             ) : (
@@ -1060,6 +1366,9 @@ function AccomplishmentsSection({
         </div>
         {certExpanded && (
           <div className="ml-7 mt-1 space-y-3">
+            {profile.certifications.length === 0 && (
+              <p className="text-sm text-gray-400">No certifications added yet.</p>
+            )}
             {profile.certifications.map((cert) => (
               <div key={cert.id} className="flex items-start gap-3">
                 <Award className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
@@ -1095,15 +1404,17 @@ function AccomplishmentsSection({
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                openModal("editCourses");
-              }}
-              className="p-1 rounded-full hover:bg-gray-100 transition-colors"
-            >
-              <Pencil className="w-4 h-4 text-gray-500" />
-            </button>
+            {isOwnProfile && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openModal("editCourses");
+                }}
+                className="p-1 rounded-full hover:bg-gray-100 transition-colors"
+              >
+                <Pencil className="w-4 h-4 text-gray-500" />
+              </button>
+            )}
             {courseExpanded ? (
               <ChevronUp className="w-4 h-4 text-gray-500" />
             ) : (
@@ -1113,6 +1424,9 @@ function AccomplishmentsSection({
         </div>
         {courseExpanded && (
           <div className="ml-7 mt-1 space-y-3">
+            {profile.courses.length === 0 && (
+              <p className="text-sm text-gray-400">No courses added yet.</p>
+            )}
             {profile.courses.map((course) => (
               <div key={course.id} className="flex items-start gap-3">
                 <BookOpen className="w-5 h-5 text-blue-500 mt-0.5 shrink-0" />
@@ -1129,7 +1443,7 @@ function AccomplishmentsSection({
       </div>
 
       {/* Edit Certifications Modal */}
-      <EditModal
+      <SlideInModal
         isOpen={activeModal === "editCertifications"}
         onClose={closeModal}
         title="Edit Certifications"
@@ -1139,10 +1453,10 @@ function AccomplishmentsSection({
           updateProfile={updateProfile}
           closeModal={closeModal}
         />
-      </EditModal>
+      </SlideInModal>
 
       {/* Edit Courses Modal */}
-      <EditModal
+      <SlideInModal
         isOpen={activeModal === "editCourses"}
         onClose={closeModal}
         title="Edit Courses"
@@ -1152,7 +1466,7 @@ function AccomplishmentsSection({
           updateProfile={updateProfile}
           closeModal={closeModal}
         />
-      </EditModal>
+      </SlideInModal>
     </section>
   );
 }
@@ -1265,7 +1579,13 @@ const peopleAlsoViewed = [
   },
 ];
 
-function RightSidebar({ profile }) {
+// Mock mutual connections data
+const mutualConnections = [
+  { name: "Priya Sharma", avatar: "https://i.pravatar.cc/100?img=5" },
+  { name: "Arjun Mehta", avatar: "https://i.pravatar.cc/100?img=8" },
+];
+
+function RightSidebar({ profile, isOwnProfile, userId }) {
   return (
     <aside className="flex flex-col gap-4 lg:sticky lg:top-20">
       {/* Profile Language */}
@@ -1274,7 +1594,7 @@ function RightSidebar({ profile }) {
           <h3 className="text-base font-semibold text-gray-900">
             Profile language
           </h3>
-          <Pencil className="w-4 h-4 text-gray-400" />
+          {isOwnProfile && <Pencil className="w-4 h-4 text-gray-400 cursor-pointer" />}
         </div>
         <div className="flex items-center gap-2 text-sm text-gray-600">
           <Globe className="w-4 h-4" />
@@ -1288,12 +1608,42 @@ function RightSidebar({ profile }) {
           <h3 className="text-base font-semibold text-gray-900">
             Public profile & URL
           </h3>
-          <ExternalLink className="w-4 h-4 text-gray-400" />
+          <ExternalLink className="w-4 h-4 text-gray-400 cursor-pointer" />
         </div>
         <p className="text-sm text-gray-500">
-          linkedin.com/in/raiyankhan
+          {profile.customUrl || "linkedin.com/in/raiyankhan"}
         </p>
       </div>
+
+      {/* How you're connected - only for visitor view */}
+      {!isOwnProfile && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+          <h3 className="text-base font-semibold text-gray-900 mb-4">
+            How you&apos;re connected
+          </h3>
+          <div className="space-y-3">
+            {mutualConnections.map((person, idx) => (
+              <div key={idx} className="flex items-center gap-3">
+                <img
+                  src={person.avatar}
+                  alt={person.name}
+                  className="w-8 h-8 rounded-full object-cover"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900">
+                    {person.name}
+                  </p>
+                  <p className="text-xs text-gray-500">1st connection</p>
+                </div>
+              </div>
+            ))}
+            <div className="flex items-center gap-2 text-sm text-gray-600 pt-2 border-t border-gray-100">
+              <Users className="w-4 h-4" />
+              <span>2 mutual connections</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* People Also Viewed */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
@@ -1388,12 +1738,17 @@ function FormField({ label, value, onChange, type = "text" }) {
   );
 }
 
-function SaveButton({ onClick }) {
+function SaveButton({ onClick, disabled }) {
   return (
     <div className="flex justify-end pt-2">
       <button
         onClick={onClick}
-        className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2 rounded-full text-sm font-semibold transition-colors shadow-sm"
+        disabled={disabled}
+        className={`px-8 py-2 rounded-full text-sm font-semibold transition-colors shadow-sm ${
+          disabled
+            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+            : "bg-blue-600 hover:bg-blue-700 text-white"
+        }`}
       >
         Save
       </button>

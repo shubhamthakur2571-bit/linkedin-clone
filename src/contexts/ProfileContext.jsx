@@ -2,7 +2,9 @@ import { createContext, useContext, useState, useMemo } from "react";
 
 const ProfileContext = createContext();
 
+// Current user's profile (editable)
 const initialProfile = {
+  id: "1",
   coverPhoto: "https://picsum.photos/seed/linkedin-cover/1200/300",
   avatar: "https://i.pravatar.cc/200?img=12",
   openToWork: true,
@@ -10,6 +12,8 @@ const initialProfile = {
   pronouns: "he/him",
   headline: "Full Stack Developer at Google | React Enthusiast",
   location: "Pune, Maharashtra, India",
+  website: "raiyan.dev",
+  customUrl: "linkedin.com/in/raiyankhan",
   contactInfo: {
     email: "raiyan.khan@gmail.com",
     phone: "+91 98765 43210",
@@ -135,8 +139,116 @@ const initialProfile = {
   ],
 };
 
+// Static profiles for other users (read-only)
+const otherProfiles = {
+  "2": {
+    id: "2",
+    name: "Shubham Patil",
+    headline: "React Developer at TCS",
+    avatar: "https://i.pravatar.cc/150?img=2",
+    coverPhoto: "https://picsum.photos/seed/shubham/1200/300",
+    location: "Mumbai, India",
+    pronouns: "he/him",
+    about: "Passionate about frontend development and building beautiful user interfaces. Experienced in React, Vue, and modern JavaScript. Always eager to learn new technologies and collaborate on interesting projects.",
+    connections: 156,
+    openToWork: false,
+    website: "",
+    customUrl: "linkedin.com/in/shubhampatil",
+    contactInfo: {
+      email: "shubham.patil@tcs.com",
+      phone: "",
+      website: "",
+      linkedin: "linkedin.com/in/shubhampatil",
+    },
+    experience: [
+      {
+        id: 1,
+        role: "React Developer",
+        company: "TCS",
+        logo: null,
+        startDate: "Mar 2022",
+        endDate: "Present",
+        location: "Mumbai, India",
+        description: "Developing responsive web applications using React and Redux. Collaborating with UX teams to implement design systems.",
+      },
+    ],
+    education: [
+      {
+        id: 1,
+        institution: "University of Mumbai",
+        degree: "Bachelor of Engineering in Computer Science",
+        startYear: "2018",
+        endYear: "2022",
+        logo: null,
+      },
+    ],
+    skills: [
+      { id: 1, name: "React", endorsements: 45 },
+      { id: 2, name: "JavaScript", endorsements: 38 },
+      { id: 3, name: "TypeScript", endorsements: 25 },
+      { id: 4, name: "Redux", endorsements: 20 },
+    ],
+    recommendations: [],
+    certifications: [],
+    courses: [],
+  },
+  "3": {
+    id: "3",
+    name: "Ryan D'Souza",
+    headline: "UI/UX Designer at Infosys",
+    avatar: "https://i.pravatar.cc/150?img=3",
+    coverPhoto: "https://picsum.photos/seed/ryan/1200/300",
+    location: "Goa, India",
+    pronouns: "he/him",
+    about: "Creative UI/UX designer with a passion for crafting intuitive digital experiences. Specialized in Figma, Adobe XD, and design systems. Believes in user-centered design and data-driven decisions.",
+    connections: 89,
+    openToWork: true,
+    website: "ryandsouza.design",
+    customUrl: "linkedin.com/in/ryandsouza",
+    contactInfo: {
+      email: "ryan.dsouza@infosys.com",
+      phone: "",
+      website: "ryandsouza.design",
+      linkedin: "linkedin.com/in/ryandsouza",
+    },
+    experience: [
+      {
+        id: 1,
+        role: "UI/UX Designer",
+        company: "Infosys",
+        logo: null,
+        startDate: "Jun 2021",
+        endDate: "Present",
+        location: "Goa, India",
+        description: "Leading design initiatives for enterprise clients. Creating wireframes, prototypes, and high-fidelity mockups.",
+      },
+    ],
+    education: [
+      {
+        id: 1,
+        institution: "Goa University",
+        degree: "B.Des in Communication Design",
+        startYear: "2017",
+        endYear: "2021",
+        logo: null,
+      },
+    ],
+    skills: [
+      { id: 1, name: "Figma", endorsements: 52 },
+      { id: 2, name: "UI Design", endorsements: 48 },
+      { id: 3, name: "User Research", endorsements: 35 },
+      { id: 4, name: "Adobe XD", endorsements: 28 },
+    ],
+    recommendations: [],
+    certifications: [],
+    courses: [],
+  },
+};
+
 export function ProfileProvider({ children }) {
   const [profile, setProfile] = useState(initialProfile);
+  // Track connection requests: { userId: 'pending' | 'connected' }
+  const [connectionStatus, setConnectionStatus] = useState({});
 
   const updateProfile = (section, data) => {
     setProfile((prev) => ({
@@ -145,9 +257,43 @@ export function ProfileProvider({ children }) {
     }));
   };
 
+  const getProfileById = (userId) => {
+    if (userId === "1" || userId === 1) {
+      return { ...profile, isOwnProfile: true };
+    }
+    const otherProfile = otherProfiles[userId];
+    if (otherProfile) {
+      return { ...otherProfile, isOwnProfile: false };
+    }
+    return null;
+  };
+
+  const sendConnectionRequest = (userId) => {
+    setConnectionStatus((prev) => ({ ...prev, [userId]: "pending" }));
+  };
+
+  const withdrawConnectionRequest = (userId) => {
+    setConnectionStatus((prev) => {
+      const newStatus = { ...prev };
+      delete newStatus[userId];
+      return newStatus;
+    });
+  };
+
+  const getConnectionStatus = (userId) => {
+    return connectionStatus[userId] || null;
+  };
+
   const value = useMemo(
-    () => ({ profile, updateProfile }),
-    [profile]
+    () => ({
+      profile,
+      updateProfile,
+      getProfileById,
+      sendConnectionRequest,
+      withdrawConnectionRequest,
+      getConnectionStatus,
+    }),
+    [profile, connectionStatus]
   );
 
   return (
